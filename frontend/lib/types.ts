@@ -1,0 +1,17 @@
+export type Category = { id: string; slug: string; name: string; description: string; image: string };
+export type Variant = { id: string; sku: string; name: string; color: string; price: number; available: number; active: boolean; compatibility: Record<string, unknown> };
+export type Product = { id: string; slug: string; name: string; brand: string; category: Category; description: string; specs: Record<string, string>; aesthetics: string[]; purposes: string[]; image: string; images: { url: string; alt: string }[]; price: number | null; available: boolean; featured: boolean; published: boolean; variants: Variant[] };
+export type Listing = { items: Product[]; total: number; page: number; limit: number };
+export type User = { id: string; name: string; email: string; role: "ADMIN" | "CUSTOMER"; cart_adjusted?: string[] };
+export type CartLine = { id: string; variant_id: string; name: string; slug: string; variant: string; image: string; price: number; quantity: number; subtotal: number; valid: boolean; available: number };
+export type Cart = { items: CartLine[]; count: number; subtotal: number };
+export type Address = { name: string; email: string; phone: string; line1: string; line2: string; city: string; state: string; postal_code: string; country: "India" };
+export type PaymentMethod = "RAZORPAY" | "CASH_ON_DELIVERY";
+export type Pricing = { subtotal: number; discount: number; shipping: number; tax: number; total: number; payments_available?: boolean; cash_on_delivery?: boolean };
+export type Order = { id: string; number: string; status: string; payment: string; payment_method: PaymentMethod; pricing: Pricing; created_at: string; expires_at: string; address?: Address; shipment?: { carrier: string; tracking: string }; items?: { name: string; slug: string; variant: string; unit_price: number; quantity: number }[]; gateway_order_id?: string; key?: string };
+export type Store = { sample_catalogue: boolean; free_shipping: number; sandbox: boolean; payments_available: boolean; cash_on_delivery: boolean };
+export type Preferences = { budget: number; purpose: string; aesthetic: string; colors: string[]; required: string[]; existing: string[]; width_cm: number | null; depth_cm: number | null; wireless: boolean; quiet: boolean; notes: string };
+export type SetupItem = Variant & { product_id: string; product: string; slug: string; category: string; category_name: string; image: string; reason: string };
+export type Selection = { items: SetupItem[]; alternatives: Record<string, SetupItem[]>; warnings: string[]; subtotal: number; remaining: number; estimates: Pricing };
+export type Setup = Selection & { id?: string; title: string; description: string; source: string };
+export type SavedSetup = { id: string; name: string; preferences: Preferences; variant_ids: string[]; explanation: { title?: string; description?: string; source?: string } };
