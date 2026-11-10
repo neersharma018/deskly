@@ -5,10 +5,9 @@ import { CampaignHero } from "@/components/campaign-hero";
 import { Lookbook } from "@/components/lookbook";
 import { Photo, ProductCard } from "@/components/product";
 import { Button, SectionHeader } from "@/components/ui";
-import { server } from "@/lib/server";
+import { server, storeUnavailable } from "@/lib/server";
 import { editorial, samplePhoto } from "@/lib/editorial-media";
-import { ApiError, money } from "@/lib/api";
-import { StoreConnectionError } from "@/lib/store-upstream";
+import { money } from "@/lib/api";
 import type { Category, Product, Store } from "@/lib/types";
 
 const edit = ["slate-75-mechanical-keyboard", "rise-walnut-monitor-stand", "beam-task-lamp", "field-desk-mat"];
@@ -44,10 +43,7 @@ function WorkspaceStudies({ storeAvailable }: { storeAvailable: boolean }) {
 export default async function Home() {
   const catalogue = await Promise.all([
     server<Category[]>("/categories"), server<Product[]>("/products/featured?limit=12"), server<Store>("/store")
-  ]).catch(error => {
-    if (error instanceof StoreConnectionError || (error instanceof ApiError && error.status >= 500)) return null;
-    throw error;
-  });
+  ]).catch(storeUnavailable);
   if (!catalogue) {
     return <div className="editorial-home">
       <CampaignHero hasLookbook={false} storeAvailable={false}/>

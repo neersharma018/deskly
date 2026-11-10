@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { ProductCard } from "./product";
 import { Button, Empty, PageHeader } from "./ui";
-import { server } from "@/lib/server";
+import { server, storeUnavailable } from "@/lib/server";
 import { editorial, samplePhoto } from "@/lib/editorial-media";
 import type { Category, Listing } from "@/lib/types";
 
@@ -23,9 +23,14 @@ export async function Catalogue({ params, category }: { params: SearchParams; ca
     } else if (key !== "available" || value === "true") query.set(key, value);
   }
   if (category) query.set("category", category.slug);
-  const [listing, categories] = await Promise.all([server<Listing>("/products?" + query), server<Category[]>("/categories")]);
   const base = category ? "/categories/" + category.slug : "/shop";
   const photo = category ? samplePhoto(category.image)?.src ?? category.image : editorial.detail;
+  const results = await Promise.all([server<Listing>("/products?" + query), server<Category[]>("/categories")]).catch(storeUnavailable);
+  if (!results) return <div className="wrap content">
+    <PageHeader kicker="THE DESKLY CATALOGUE" title={category?.name || "Shop essentials"} photo={photo}>The catalogue is temporarily unavailable.</PageHeader>
+    <Button asChild variant="outline"><Link href="/#workspace-studies">Explore workspace studies</Link></Button>
+  </div>;
+  const [listing, categories] = results;
   const pagination = (page: number) => {
     const next = new URLSearchParams();
     for (const key of keys) if (typeof params[key] === "string") next.set(key, params[key]);

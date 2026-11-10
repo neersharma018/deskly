@@ -15,6 +15,11 @@ export async function server<T>(path: string, authenticated = false) {
   return unpack<T>(response);
 }
 
+export function storeUnavailable(error: unknown) {
+  if (error instanceof StoreConnectionError || (error instanceof ApiError && error.status >= 500)) return null;
+  throw error;
+}
+
 export async function session(path: string, admin = false) {
   try {
     const user = await server<User>("/me", true);
