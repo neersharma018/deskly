@@ -7,7 +7,8 @@ import { Photo, ProductCard } from "@/components/product";
 import { Button, SectionHeader } from "@/components/ui";
 import { server } from "@/lib/server";
 import { editorial, samplePhoto } from "@/lib/editorial-media";
-import { money } from "@/lib/api";
+import { ApiError, money } from "@/lib/api";
+import { StoreConnectionError } from "@/lib/store-upstream";
 import type { Category, Product, Store } from "@/lib/types";
 
 const edit = ["slate-75-mechanical-keyboard", "rise-walnut-monitor-stand", "beam-task-lamp", "field-desk-mat"];
@@ -18,10 +19,46 @@ const presets = [
   { title: "The Daily Driver", style: "Modern", purpose: "Remote Work", image: editorial.workspace, alt: "A minimal desk with a monitor and work accessories" },
 ];
 
+function WorkspaceStudies({ storeAvailable }: { storeAvailable: boolean }) {
+  return <section className="wrap home-section editorial-chapter curated" id="workspace-studies">
+    <SectionHeader kicker={storeAvailable ? "05 / WORKSPACE STUDIES" : "WORKSPACE STUDIES"} title="Three ways to start"/>
+    <div className="curated-grid">
+      {presets.map(({ title, style, purpose, image, alt }) => {
+        const content = <>
+          <div className="curated-photo"><Image src={image} fill alt={alt} sizes="(max-width: 760px) 100vw, 33vw"/></div>
+          <div className="curated-label"><span>{purpose}</span><h3>{title}</h3>{storeAvailable && <ArrowUpRight size={19}/>}</div>
+        </>;
+        return storeAvailable
+          ? <Link key={title} className="curated-card" href={`/setup-builder?purpose=${encodeURIComponent(purpose)}&aesthetic=${encodeURIComponent(style)}`}>{content}</Link>
+          : <article key={title} className="curated-card">{content}</article>;
+      })}
+    </div>
+    {storeAvailable && <nav className="setup-types" aria-label="Shop by setup type">
+      {["Gaming", "Studying", "General Productivity"].map(purpose =>
+        <Link href={`/setup-builder?purpose=${encodeURIComponent(purpose)}`} key={purpose}>{purpose}<ArrowUpRight size={15}/></Link>
+      )}
+    </nav>}
+  </section>;
+}
+
 export default async function Home() {
-  const [categories, featured, store] = await Promise.all([
+  const catalogue = await Promise.all([
     server<Category[]>("/categories"), server<Product[]>("/products/featured?limit=12"), server<Store>("/store")
-  ]);
+  ]).catch(error => {
+    if (error instanceof StoreConnectionError || (error instanceof ApiError && error.status >= 500)) return null;
+    throw error;
+  });
+  if (!catalogue) {
+    return <div className="editorial-home">
+      <CampaignHero hasLookbook={false} storeAvailable={false}/>
+      <section className="wrap content" id="categories">
+        <SectionHeader kicker="Store connection" title="Shopping is temporarily unavailable."/>
+        <p>The catalogue and Setup Builder will return when the store reconnects.</p>
+      </section>
+      <WorkspaceStudies storeAvailable={false}/>
+    </div>;
+  }
+  const [categories, featured, store] = catalogue;
   const pieces = edit.flatMap(slug => {
     const product = featured.find(item => item.slug === slug);
     if (!product || product.price === null) return [];
@@ -85,21 +122,6 @@ export default async function Home() {
       </div>
     </section>
 
-    <section className="wrap home-section editorial-chapter curated">
-      <SectionHeader kicker="05 / WORKSPACE STUDIES" title="Three ways to start"/>
-      <div className="curated-grid">
-        {presets.map(({ title, style, purpose, image, alt }) =>
-          <Link key={title} className="curated-card" href={`/setup-builder?purpose=${encodeURIComponent(purpose)}&aesthetic=${encodeURIComponent(style)}`}>
-            <div className="curated-photo"><Image src={image} fill alt={alt} sizes="(max-width: 760px) 100vw, 33vw"/></div>
-            <div className="curated-label"><span>{purpose}</span><h3>{title}</h3><ArrowUpRight size={19}/></div>
-          </Link>
-        )}
-      </div>
-      <nav className="setup-types" aria-label="Shop by setup type">
-        {["Gaming", "Studying", "General Productivity"].map(purpose =>
-          <Link href={`/setup-builder?purpose=${encodeURIComponent(purpose)}`} key={purpose}>{purpose}<ArrowUpRight size={15}/></Link>
-        )}
-      </nav>
-    </section>
+    <WorkspaceStudies storeAvailable/>
   </div>;
 }

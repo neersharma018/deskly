@@ -65,7 +65,7 @@ function DeskFilm() {
   </>;
 }
 
-export function CampaignHero({ hasLookbook }: { hasLookbook: boolean }) {
+export function CampaignHero({ hasLookbook, storeAvailable = true }: { hasLookbook: boolean; storeAvailable?: boolean }) {
   const [selected, setSelected] = useState(0);
   const scene = scenes[selected];
   const index = String(selected + 1).padStart(2, "0");
@@ -91,14 +91,16 @@ export function CampaignHero({ hasLookbook }: { hasLookbook: boolean }) {
           <span className="title-mask"><em>better work.</em></span></h1>
         <p>Keyboards, task lighting and the pieces that pull your desk together.</p>
         <div className="campaign-actions">
+          {storeAvailable ? <>
           <Button asChild><Link href="/shop">Shop essentials <ArrowUpRight size={17}/></Link></Button>
           <Link href="/setup-builder" className="campaign-secondary">Build your setup <ArrowUpRight size={15}/></Link>
+          </> : <Button asChild><a href="#workspace-studies">Explore workspaces <ArrowDown size={17}/></a></Button>}
         </div>
       </div>
 
       <div className="campaign-index">
         <a href={hasLookbook ? "#lookbook" : "#categories"} className="campaign-scroll">
-          <ArrowDown size={15}/>{hasLookbook ? "Shop the scene" : "Explore collections"}
+          <ArrowDown size={15}/>{hasLookbook ? "Shop the scene" : storeAvailable ? "Explore collections" : "Store status"}
         </a>
         <div className="campaign-selector" role="group" aria-label="Hero scenes">
           {scenes.map((item, i) => <button key={item.label} type="button" aria-controls="campaign-scene"

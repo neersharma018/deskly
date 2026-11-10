@@ -2,12 +2,16 @@ import "server-only";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { ApiError, unpack } from "./api";
+import { fetchStore, StoreConnectionError } from "./store-upstream";
 import type { User } from "./types";
 
 export async function server<T>(path: string, authenticated = false) {
   const headers = authenticated ? { cookie: (await cookies()).toString() } : undefined;
-  const response = await fetch(new URL("/api/v1" + path, process.env.API_URL || "http://127.0.0.1:8000"),
-    { cache: "no-store", headers, signal: AbortSignal.timeout(10000) });
+  const response = await fetchStore(path, { cache: "no-store", headers, signal: AbortSignal.timeout(10000) });
+  if (response.ok && !response.headers.get("content-type")?.includes("application/json")) {
+    console.error("[deskly] FastAPI returned a non-JSON response. Check API_URL.");
+    throw new StoreConnectionError("The store service is temporarily unavailable.");
+  }
   return unpack<T>(response);
 }
 
