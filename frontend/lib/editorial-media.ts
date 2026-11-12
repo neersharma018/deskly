@@ -1,14 +1,18 @@
 const root = "/media/after-hours";
 
 export const editorial = {
-  film: `${root}/keystroke.mp4`,
-  poster: `${root}/keystroke-poster.webp`,
   keyboard: `${root}/keyboard.webp`,
   detail: `${root}/key-detail.webp`,
   workspace: `${root}/workspace.webp`,
   focus: `${root}/focus.webp`,
   night: `${root}/night.webp`,
   walnut: `${root}/walnut.webp`,
+} as const;
+
+export const workspaceEdition = {
+  hero: "/media/workspace-edition/walnut-workspace.webp",
+  assembly: "/media/workspace-edition/keyboard-assembly.webp",
+  craftsmanship: "/media/workspace-edition/keyboard-edge.webp",
 } as const;
 
 // The seed uses category artwork as a stand-in. Store-managed image URLs pass through.

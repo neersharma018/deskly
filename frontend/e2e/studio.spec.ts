@@ -3,11 +3,9 @@ import { expect, test } from "@playwright/test";
 
 test("the shoppable lookbook selects a live product", async ({ page }) => {
   await page.goto("/");
-  const scenes = page.getByRole("group", { name: "Hero scenes" });
-  const workspace = scenes.getByRole("button", { name: /Workspace/ });
-  await workspace.click();
-  await expect(workspace).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("link", { name: "Shop the scene" }).click();
+  await page.getByRole("link", { name: "Discover DESKLY" }).click();
+  await expect(page).toHaveURL(/#our-story$/);
+  await expect(page.getByRole("heading", { name: "Good work is in the details." })).toBeVisible();
   const marker = page.getByRole("group", { name: "Pieces in the edit" }).getByRole("button", { name: /Beam Task Lamp/ });
   await marker.click();
   await expect(marker).toHaveAttribute("aria-pressed", "true");

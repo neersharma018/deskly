@@ -22,7 +22,7 @@ export function Lookbook({ pieces }: { pieces: LookbookPiece[] }) {
   if (!piece) return null;
 
   return <section className="home-section editorial-chapter" id="lookbook">
-    <SectionHeader kicker="02 / IN DETAIL" title="The detail study"/>
+    <SectionHeader kicker="IN DETAIL" title="The detail study"/>
     <div className="lookbook">
       <figure className="lookbook-image" key={piece.slug}>
         <Photo src={piece.image} alt={piece.alt} sizes="(max-width: 760px) 100vw, 56vw"/>

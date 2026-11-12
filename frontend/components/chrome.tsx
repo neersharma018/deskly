@@ -37,27 +37,27 @@ export function Chrome({ sample }: { sample: boolean }) {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, [menu, search]);
-  const links = [["Shop", "/shop"], ["Collections", "/#categories"], ["Setup Builder", "/setup-builder"]];
+  const links = [["Shop", "/shop"], ["Our Story", "/#our-story"], ["Setup Builder", "/setup-builder"]];
   return <>
     <a className="skip" href="#main">Skip to content</a>
-    <div className="topbar"><span className="topbar-dot" aria-hidden="true"/>{sample ? "DESKLY STUDIO / SAMPLE CATALOGUE" : "DESKLY STUDIO / SHIPPING WITHIN INDIA"}</div>
+    {sample && <div className="topbar"><span className="topbar-dot" aria-hidden="true"/>DESKLY STUDIO / SAMPLE CATALOGUE</div>}
     <header className="site-header">
       <div className="wrap nav">
-        <button type="button" id="menu-toggle" className="icon-button mobile-menu" aria-label={menu ? "Close menu" : "Open menu"} aria-expanded={menu} onClick={() => { setMenu(!menu); setSearch(false); }}>{menu ? <X size={21}/> : <Menu size={21}/>}</button>
+        <Link aria-label="Deskly home" className="brand-link" href="/" onClick={() => { setMenu(false); setSearch(false); }}><Mark/></Link>
         <nav className="desktop-nav" aria-label="Main navigation">
           {links.map(([name, href]) => <Link key={href} href={href} aria-current={path === href ? "page" : undefined}
             className={path === href ? "active" : undefined}>{name}</Link>)}
         </nav>
-        <Link aria-label="Deskly home" className="brand-link" href="/" onClick={() => { setMenu(false); setSearch(false); }}><Mark/></Link>
         <nav className="nav-actions" aria-label="Shopping tools">
           <button type="button" id="search-toggle" className="icon-button" aria-label={search ? "Close search" : "Search"} aria-expanded={search} onClick={() => { setSearch(!search); setMenu(false); }}>{search ? <X size={20}/> : <Search size={20}/>}</button>
           <Link className="icon-button account-icon" aria-label="Account" href={loggedIn ? "/account" : "/login"}><UserRound size={20}/></Link>
           <Link className="icon-button wishlist-icon" aria-label="Wishlist" href="/account/wishlist"><Heart size={20}/></Link>
           <Link className="icon-button bag-icon" aria-label={`Shopping bag, ${count} items`} href="/cart"><ShoppingBag size={20}/><span>{count}</span></Link>
         </nav>
+        <button type="button" id="menu-toggle" className="icon-button mobile-menu" aria-label={menu ? "Close menu" : "Open menu"} aria-expanded={menu} onClick={() => { setMenu(!menu); setSearch(false); }}>{menu ? <X size={21}/> : <Menu size={21}/>}</button>
       </div>
       {menu && <nav className="mobile-links wrap" aria-label="Mobile navigation">
-        {[["Home", "/"], ...links, ["Account", "/account"], ["Wishlist", "/account/wishlist"]].map(([name, href]) => <Link href={href} key={href} onClick={() => setMenu(false)}>{name}<ArrowUpRight size={16}/></Link>)}
+        {[["Home", "/"], ...links, ["Account", loggedIn ? "/account" : "/login"], ["Wishlist", "/account/wishlist"]].map(([name, href]) => <Link href={href} key={href} onClick={() => setMenu(false)}>{name}<ArrowUpRight size={16}/></Link>)}
       </nav>}
       {search && <form action="/shop" className="wrap site-search"><label className="sr-only" htmlFor="site-q">Search products</label><input id="site-q" name="q" placeholder="Search deskside essentials…" autoFocus required/><button className="button button-primary">Search</button></form>}
     </header>
@@ -67,7 +67,7 @@ export function Chrome({ sample }: { sample: boolean }) {
 export function Footer() {
   return <footer className="footer"><div className="wrap">
     <div className="footer-content"><div><Link href="/" aria-label="Deskly home"><Mark/></Link><p>Thoughtful essentials for the space where you do your best work.</p></div>
-      <div><strong>Explore</strong><Link href="/shop">Shop all</Link><Link href="/#categories">Categories</Link><Link href="/setup-builder">Setup Builder</Link></div>
+      <div><strong>Explore</strong><Link href="/shop">Shop all</Link><Link href="/#our-story">Our Story</Link><Link href="/#categories">Categories</Link><Link href="/setup-builder">Setup Builder</Link></div>
       <div><strong>Your Deskly</strong><Link href="/account">Account</Link><Link href="/account/wishlist">Wishlist</Link><Link href="/cart">Shopping bag</Link></div>
       <div><strong>DESKLY STUDIO</strong><p>Designed around your workday.<br/>India · INR ₹</p></div>
     </div><div className="footer-wordmark" aria-hidden="true">DESKLY</div><div className="footer-base"><span>© {new Date().getFullYear()} DESKLY</span><span>MAKE ROOM FOR BETTER WORK.</span></div>

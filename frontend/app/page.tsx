@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { CampaignHero } from "@/components/campaign-hero";
+import { DesignStories } from "@/components/design-stories";
 import { Lookbook } from "@/components/lookbook";
 import { Photo, ProductCard } from "@/components/product";
 import { Button, SectionHeader } from "@/components/ui";
@@ -20,7 +21,7 @@ const presets = [
 
 function WorkspaceStudies({ storeAvailable }: { storeAvailable: boolean }) {
   return <section className="wrap home-section editorial-chapter curated" id="workspace-studies">
-    <SectionHeader kicker={storeAvailable ? "05 / WORKSPACE STUDIES" : "WORKSPACE STUDIES"} title="Three ways to start"/>
+    <SectionHeader kicker="WORKSPACE STUDIES" title="Three ways to start"/>
     <div className="curated-grid">
       {presets.map(({ title, style, purpose, image, alt }) => {
         const content = <>
@@ -46,9 +47,10 @@ export default async function Home() {
   ]).catch(storeUnavailable);
   if (!catalogue) {
     return <div className="editorial-home">
-      <CampaignHero hasLookbook={false} storeAvailable={false}/>
-      <section className="wrap content" id="categories">
-        <SectionHeader kicker="Store connection" title="Shopping is temporarily unavailable."/>
+      <CampaignHero storeAvailable={false}/>
+      <DesignStories/>
+      <section className="wrap catalogue-status" id="categories">
+        <h2>Shopping is temporarily unavailable.</h2>
         <p>The catalogue and Setup Builder will return when the store reconnects.</p>
       </section>
       <WorkspaceStudies storeAvailable={false}/>
@@ -66,7 +68,7 @@ export default async function Home() {
   });
 
   return <div className="editorial-home">
-    <CampaignHero hasLookbook={pieces.length > 0}/>
+    <CampaignHero storeAvailable/>
 
     <aside className="campaign-service" aria-label="Store information">
       <div className="wrap">
@@ -76,9 +78,11 @@ export default async function Home() {
       </div>
     </aside>
 
+    <DesignStories/>
+
     <div className="wrap">
       <section className="home-section editorial-chapter" id="categories">
-        <SectionHeader kicker="01 / COLLECTIONS" title="Shop by category" href="/shop" label="View all essentials"/>
+        <SectionHeader kicker="COLLECTIONS" title="Shop by category" href="/shop" label="View all essentials"/>
         <div className="category-grid">
           {categories.map((category, i) => <Link className="category-card" key={category.id} href={`/categories/${category.slug}`}>
             <div className="category-photo">
@@ -93,7 +97,7 @@ export default async function Home() {
       <Lookbook pieces={pieces}/>
 
       <section className="home-section editorial-chapter studio-picks">
-        <SectionHeader kicker="03 / THE SHORTLIST" title="Everyday essentials" href="/shop" label="Shop the catalogue"/>
+        <SectionHeader kicker="THE SHORTLIST" title="Everyday essentials" href="/shop" label="Shop the catalogue"/>
         {featured.length ? <div className="products">{featured.slice(0, 4).map(product => <ProductCard key={product.id} product={product}/>)}</div> :
           <p><Link className="inline-link" href="/shop">Browse the catalogue</Link></p>}
       </section>
@@ -105,7 +109,7 @@ export default async function Home() {
       </div>
       <div className="wrap builder-campaign-content">
         <div>
-          <span className="eyebrow"><i/> 04 / Setup Builder</span>
+          <span className="eyebrow"><i/> Setup Builder</span>
           <h2 id="builder-campaign-title">Start with<br/>your desk.</h2>
           <p>Choose a budget and tell us how you work. Then build, edit, and shop a setup from the live catalogue.</p>
           <Button asChild><Link href="/setup-builder">Build your setup <ArrowUpRight size={17}/></Link></Button>

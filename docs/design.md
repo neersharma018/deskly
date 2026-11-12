@@ -1,8 +1,8 @@
 # DESKLY design document
 
-## The After Hours Edit
+## Workspace Essentials
 
-The storefront takes its cue from Sarkar's full-width film, spare navigation and product-led page rhythm. DESKLY adapts those ideas for a desk equipment collection with near-black surfaces, warm highlights, close-up photographs and concise product copy. Bodoni Moda sets campaign and page headlines. Manrope and Inter keep shopping controls, prices and form labels legible. [Sarkar storefront reference](https://www.sarkar.store/)
+The homepage opens on a sunlit walnut desk, then moves through a mechanical keyboard assembly and a close-up of the case edge. Warm highlights connect the photography to the dark surfaces. Bodoni Moda sets campaign and page headlines. Manrope and Inter keep shopping controls, prices and form labels legible.
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ The storefront takes its cue from Sarkar's full-width film, spare navigation and
 
 | Journey | Steps | Completion |
 | --- | --- | --- |
-| Browse the edit | Home → Change scene or open the detail study → Select a numbered product → View product → Add a variant | The bag reflects the persisted item |
+| Browse the edit | Home → Open the detail study → Select a numbered product → View product → Add a variant | The bag reflects the persisted item |
 | Find an accessory | Shop or category → Apply search and filters → Open result → Select variant | The product page shows the current price and stock |
 | Build a setup | Setup Builder or a workspace preset → Enter budget and constraints → Generate → Edit a piece → Save or add the set | The user can reopen the setup or checkout with it |
 | Place an order | Bag → Shipping details → Payment method → Order status | Online payment awaits verified capture. Cash on delivery shows payment due |
@@ -27,7 +27,8 @@ The storefront takes its cue from Sarkar's full-width film, spare navigation and
 | Component | Responsibility | Interaction |
 | --- | --- | --- |
 | `Chrome` | Navigation, search, account and bag | Search and the mobile menu can be dismissed with Escape |
-| `CampaignHero` | Hero film, title and three scenes | Numbered buttons crossfade scenes. The muted film can be paused and resumes in view if playback is enabled |
+| `CampaignHero` | Workspace photograph, headline and primary links | Explore the collection when the catalogue is online, or jump to the workspace gallery. Discover DESKLY jumps to the craftsmanship section |
+| `DesignStories` | Mechanical keyboard assembly and craftsmanship | The assembly diagram and its captions describe common keyboard parts. The close-up shows the finish, bevel and case hardware |
 | `Lookbook` | Numbered product study | Each selection changes the photograph, description, current price and product link |
 | `Photo`, `ProductCard`, `ProductDetail` | Responsive images, stock, variants and purchase actions | Store-managed photos render directly. Seeded records use representative category photography |
 | `Builder` | Preferences, recommendations, alternatives, save and add to bag | Backend validates the edited set against current stock |
@@ -35,11 +36,11 @@ The storefront takes its cue from Sarkar's full-width film, spare navigation and
 
 ## Responsive behavior and motion
 
-The full-width hero pairs a masked title entrance with a short, silent keyboard film. Scene selection uses a crossfade and a subtle scale transition. Editorial sections lift into view on supported browsers without fading their text. Mobile keeps the film in the background, wraps the scene controls into the bottom rail, and stacks the detail study and purchase flows. Reduced-motion preferences stop the automatic film and disable editorial animation. The Play film control is available for deliberate playback. The still poster remains usable when video playback is unavailable.
+The desktop headline overlays the left side of the workspace photograph. On mobile the photograph sits above the headline, and the assembly and craftsmanship spreads stack into one column. The hero uses a short scale and type entrance. Editorial copy lifts into view on supported browsers, and reduced-motion preferences disable these transitions.
 
 ## Media credits
 
-The After Hours Edit uses licensed photography and footage. The sample catalogue is identified in the storefront header. Product pages with representative photography also carry an image note. Image and video files are bundled locally in `frontend/public/media/after-hours`. The photo pages below identify the original works. [Unsplash License](https://unsplash.com/license) · [Pexels License](https://www.pexels.com/license/)
+The workspace photograph, keyboard assembly and keyboard close-up came from the three supplied references. Their optimized copies are bundled in `frontend/public/media/workspace-edition`. The keyboard imagery is illustrative. The sample catalogue is identified in the storefront header, and product pages with representative photography carry an image note. The earlier After Hours media is bundled in `frontend/public/media/after-hours`. [Unsplash License](https://unsplash.com/license) · [Pexels License](https://www.pexels.com/license/)
 
 | File | Source |
 | --- | --- |
