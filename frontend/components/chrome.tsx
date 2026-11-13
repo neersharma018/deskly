@@ -64,12 +64,19 @@ export function Chrome({ sample }: { sample: boolean }) {
   </>;
 }
 
-export function Footer() {
+export function Footer({ year, email, phone }: { year: number; email?: string; phone?: string }) {
+  const emailLink = email && /^[^\s@?&]+@[^\s@?&]+\.[^\s@?&]+$/.test(email) ? email : undefined;
+  const telephone = phone?.replace(/[\s().-]/g, "");
+  const phoneLink = telephone && /^\+\d{7,15}$/.test(telephone) ? telephone : undefined;
   return <footer className="footer"><div className="wrap">
     <div className="footer-content"><div><Link href="/" aria-label="Deskly home"><Mark/></Link><p>Thoughtful essentials for the space where you do your best work.</p></div>
       <div><strong>Explore</strong><Link href="/shop">Shop all</Link><Link href="/#our-story">Our Story</Link><Link href="/#categories">Categories</Link><Link href="/setup-builder">Setup Builder</Link></div>
       <div><strong>Your Deskly</strong><Link href="/account">Account</Link><Link href="/account/wishlist">Wishlist</Link><Link href="/cart">Shopping bag</Link></div>
-      <div><strong>DESKLY STUDIO</strong><p>Designed around your workday.<br/>India · INR ₹</p></div>
-    </div><div className="footer-wordmark" aria-hidden="true">DESKLY</div><div className="footer-base"><span>© {new Date().getFullYear()} DESKLY</span><span>MAKE ROOM FOR BETTER WORK.</span></div>
+      <div><strong>{emailLink || phoneLink ? "Contact" : "DESKLY STUDIO"}</strong>
+        {emailLink && <a href={"mailto:" + emailLink}>{emailLink}</a>}
+        {phoneLink && <a href={"tel:" + phoneLink}>{phone}</a>}
+        <p>India · INR ₹</p>
+      </div>
+    </div><div className="footer-wordmark" aria-hidden="true">DESKLY</div><div className="footer-base"><span>© {year} DESKLY</span><span>MAKE ROOM FOR BETTER WORK.</span></div>
   </div></footer>;
 }

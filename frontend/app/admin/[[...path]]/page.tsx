@@ -12,7 +12,13 @@ const routes = [["", "Dashboard"], ["products", "Products"], ["categories", "Cat
   ["orders", "Orders"], ["coupons", "Coupons"], ["analytics", "Analytics"], ["settings", "Settings"]];
 const statuses = ["PENDING_PAYMENT", "PLACED", "PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "PAYMENT_FAILED"];
 const uuid = /^[\da-f-]{36}$/i;
-export const metadata = { title: "Store administration" };
+export async function generateMetadata({ params }: { params: Promise<{ path?: string[] }> }) {
+  const [section, id] = (await params).path ?? [];
+  const label = id === "new" ? "New product" : routes.find(([key]) => key === section)?.[1];
+  return { title: label ? `${label} · Store admin` : "Store administration",
+    description: "Manage stock, products and fulfillment in DESKLY administration.",
+    robots: { index: false, follow: false } };
+}
 
 export default async function AdminPage({ params, searchParams }: { params: Promise<{ path?: string[] }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { path = [] } = await params;

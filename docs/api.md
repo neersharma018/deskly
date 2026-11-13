@@ -23,12 +23,14 @@ Errors include an HTTP status, a user-facing `detail` and `X-Request-ID`. Valida
 | --- | --- | --- |
 | `GET /products` | Optional `q`, `category`, `available`, `sort`, `page` and `limit` | Published catalogue records with price, stock and pagination |
 | `POST /cart/items` | Variant UUID and quantity | Current cart. Stock is checked before a line is added or incremented |
-| `POST /checkout/quote` | Optional coupon code | Integer paise for subtotal, discount, shipping, tax and total. `payments_available` indicates Razorpay and `cash_on_delivery` indicates offline payment |
-| `POST /checkout/orders` | Shipping address, quote total, optional coupon, payment method and idempotency header | 201 with order ID, number, pricing and payment state. Razorpay includes gateway checkout fields. Cash on delivery returns `PLACED` and `DUE` |
+| `POST /checkout/quote` | Optional coupon code | Integer paise for subtotal, discount, shipping, tax and total, with `payments_available`, `cash_on_delivery` and `demo_checkout` flags |
+| `POST /checkout/orders` | Shipping address, quote total, optional coupon, payment method and idempotency header | 201 with order ID, number, pricing and payment state. Demo returns `PLACED` and `NOT_REQUIRED`. Cash on delivery returns `PLACED` and `DUE` |
 | `GET /checkout/orders/{id}` | Order UUID and matching customer or guest cookie | Persisted item and price snapshots, payment state, address and shipment |
 | `PATCH /admin/orders/{id}/fulfillment` | Next status, carrier and tracking on shipment, cash collection confirmation on cash delivery | Updated order. Requires admin role and an allowed transition |
 | `POST /builder/recommend` | Budget, use case, aesthetic and optional constraints | Validated products and alternatives from the current catalogue with a setup explanation |
 
-Use `RAZORPAY` or `CASH_ON_DELIVERY` as `payment_method` at checkout. Omitted methods default to Razorpay for existing clients. A changed price, unavailable variant, reused key with a different body or invalid state transition yields a conflict. Unconfigured payment methods return 503. A 404 protects order details from callers outside the order’s scope.
+Use `RAZORPAY`, `CASH_ON_DELIVERY` or `DEMO` as `payment_method`. Omitted methods default to Razorpay. A changed price, unavailable variant, reused key with a different body or invalid state transition yields a conflict. Unconfigured payment methods return 503. A 404 protects order details from callers outside the order’s scope.
 
 Cash orders transition from `PLACED` through `PROCESSING`, `SHIPPED` and `DELIVERED`. The final request must include `cash_collected: true` to record `COLLECTED`. A customer may cancel their own cash order while it is placed. Cancelling records `VOID` and restores stock.
+
+Demo orders are available only in sample environments when explicitly enabled. They use the same fulfillment states for practice, without collection, a gateway reference or a paid timestamp. The owner can cancel a placed demo order, which restores sample stock.

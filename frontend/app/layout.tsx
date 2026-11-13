@@ -13,5 +13,8 @@ export const metadata: Metadata = { title: { default: "DESKLY — Make room for 
 
 export default async function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   const store = await server<Store>("/store").catch(() => ({ sample_catalogue: false }));
-  return <html lang="en"><body><Chrome sample={store.sample_catalogue}/><main id="main">{children}</main><Footer/></body></html>;
+  const email = process.env.STORE_SUPPORT_EMAIL?.trim();
+  const phone = process.env.STORE_SUPPORT_PHONE?.trim();
+  return <html lang="en"><body><Chrome sample={store.sample_catalogue}/><main id="main">{children}</main>
+    <Footer year={new Date().getFullYear()} email={email} phone={phone}/></body></html>;
 }

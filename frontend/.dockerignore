@@ -1,5 +1,6 @@
 node_modules
 .next
+.next-local
 .env*
 test-results
 playwright-report

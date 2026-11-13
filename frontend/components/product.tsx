@@ -82,7 +82,9 @@ export function ProductDetail({ product }: { product: Product }) {
       <p className="stock-copy">{maximum > 0 ? `${variant?.available} available` : "Out of stock"}</p>
       <div className="detail-actions"><div className="stepper" aria-label="Quantity"><button type="button" aria-label="Decrease quantity" disabled={quantity <= 1} onClick={() => setQuantity(quantity - 1)}><Minus size={16}/></button><output aria-live="polite">{quantity}</output><button type="button" aria-label="Increase quantity" disabled={quantity >= maximum} onClick={() => setQuantity(quantity + 1)}><Plus size={16}/></button></div>
         <Button disabled={!hydrated || busy || !maximum} onClick={add}><ShoppingBag size={17}/>{busy ? "Adding…" : "Add to bag"}</Button><WishlistButton id={product.id} text/></div>
-      {note && <p role="status" className="form-note">{note} {note === "Added to your bag." && <Link href="/cart">View bag</Link>}</p>}
+      {note && (note === "Added to your bag." ?
+        <p role="status" className="form-note">{note} <a href="/cart">View bag</a></p> :
+        <p role="alert" className="alert">{note}</p>)}
       <dl className="specs">{Object.entries(product.specs).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
       <p className="fine">Shipping within India. Shipping and tax are calculated at checkout.</p>
     </div></div>;

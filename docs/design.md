@@ -58,4 +58,4 @@ The workspace photograph, keyboard assembly and keyboard close-up came from the 
 | `cable.webp` | Abdulvahap Demir. [Close-up of a cable](https://www.pexels.com/photo/close-up-of-cable-12671356/) |
 | `hub.webp` | [USB-C hub beside a laptop](https://unsplash.com/photos/black-and-silver-laptop-computer-on-brown-wooden-table-QirgO8svCBI) |
 
-[Architecture and contracts](architecture.md)
+[Architecture and contracts](ARCHITECTURE.md)

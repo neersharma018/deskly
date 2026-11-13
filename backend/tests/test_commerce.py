@@ -384,3 +384,36 @@ def test_cash_order_requires_opt_in_and_cancellation_restocks(client, monkeypatc
     assert (cancelled.json()["status"], cancelled.json()["payment"]) == ("CANCELLED", "VOID")
     assert client.post(url).status_code == 409
     assert product(client, "beam-task-lamp")["variants"][0]["available"] == variant["available"]
+
+
+def test_demo_order_persists_without_payment_and_supports_fulfillment(client, db_factory, monkeypatch):
+    monkeypatch.setattr(settings(), "demo_checkout", False)
+    register(client)
+    variant = product(client, "beam-task-lamp")["variants"][0]
+    add(client, variant["id"])
+    body = {**checkout_data(client), "payment_method": "DEMO"}
+    assert create_order(client, body, str(uuid4())).status_code == 503
+
+    monkeypatch.setattr(settings(), "demo_checkout", True)
+    key = str(uuid4())
+    created = create_order(client, body, key)
+    assert created.status_code == 201, created.text
+    order = created.json()
+    assert (order["status"], order["payment"], order["payment_method"]) == ("PLACED", "NOT_REQUIRED", "DEMO")
+    assert create_order(client, body, key).json()["id"] == order["id"]
+    assert client.get("/api/v1/cart").json()["count"] == 0
+    assert product(client, "beam-task-lamp")["variants"][0]["available"] == variant["available"] - 1
+
+    with TestClient(app, headers=HEADERS) as operations:
+        admin(operations)
+        url = "/api/v1/admin/orders/" + order["id"] + "/fulfillment"
+        for update in ({"status": "PROCESSING"}, {"status": "SHIPPED", "carrier": "Demo", "tracking": "DEMO-001"},
+                       {"status": "DELIVERED"}):
+            response = operations.patch(url, json=update)
+            assert response.status_code == 200, response.text
+            assert response.json()["payment"] == "NOT_REQUIRED"
+    with db_factory() as db:
+        persisted = db.get(Order, order["id"])
+        assert persisted.paid_at is None
+        assert persisted.payment.gateway_order_id is None
+    assert client.get("/api/v1/me/orders/" + order["id"]).json()["status"] == "DELIVERED"

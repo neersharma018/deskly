@@ -18,9 +18,10 @@ export function CampaignHero({ storeAvailable }: { storeAvailable: boolean }) {
         <div className="campaign-actions">
           <Button asChild>
             <Link href={storeAvailable ? "/shop" : "#workspace-studies"}>
-              {storeAvailable ? "Explore collection" : "Explore workspaces"} <ArrowUpRight size={16}/>
+              {storeAvailable ? "Shop now" : "Explore workspaces"} <ArrowUpRight size={16}/>
             </Link>
           </Button>
+          {storeAvailable && <Link href="/setup-builder" className="campaign-secondary">Build a desk setup</Link>}
           <a href="#our-story" className="campaign-secondary">Discover DESKLY</a>
         </div>
       </div>

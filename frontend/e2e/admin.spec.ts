@@ -45,4 +45,6 @@ test("administration can create, stock, publish and archive a product", async ({
   }
   await expect.poll(async () => (await page.request.get("/api/v1/products/" + slug)).status()).toBe(404);
   await expect(page.getByRole("heading", { name: "Catalogue visibility" })).toHaveCount(0);
+  await page.goto("/admin/orders");
+  await expect(page.getByRole("heading", { name: "Orders", exact: true })).toBeVisible();
 });

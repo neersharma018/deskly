@@ -321,6 +321,9 @@
 .footer { padding-block: 47px 16px; background: #11100f; }
 .footer-wordmark { margin-top: 40px; color: #77635b; font: 830 clamp(48px, 15vw, 218px)/.78 var(--heading); letter-spacing: .045em; }
 .footer-base { margin-top: 18px; }
+.footer-content > div, .split > *, .side-layout > *, .stack > *, .filters > *, .form-grid > * { min-width: 0; }
+.footer-content a, .line h3, .panel p { overflow-wrap: anywhere; }
+.thumbnails { flex-wrap: wrap; }
 
 .payment-options { display: grid; gap: 8px; }
 .payment-choice { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--edge); background: var(--panel); }
@@ -354,6 +357,7 @@
   .wordmark { font-size: 22px; }
   .nav-actions .icon-button { min-width: 33px; }
   .nav-actions .bag-icon { min-width: 43px; gap: 3px; }
+  .filter-bottom { flex-wrap: wrap; }
   .campaign { display: block; min-height: 0; }
   .campaign-picture { position: relative; aspect-ratio: 1.5; }
   .campaign-picture img { object-position: 62% 52%; }

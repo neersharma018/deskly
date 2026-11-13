@@ -213,6 +213,7 @@ def store_settings(admin: Admin):
     return {"environment": s.environment, "sample_catalogue": s.sample_catalogue,
             "shipping_paise": s.shipping_paise, "free_shipping_paise": s.free_shipping_paise, "tax_bps": s.tax_bps,
             "payments": bool(s.razorpay_key_id and s.razorpay_key_secret), "cash_on_delivery": s.cash_on_delivery,
+            "demo_checkout": s.demo_checkout,
             "webhooks": bool(s.razorpay_webhook_secret),
             "llm": bool(s.openai_api_key), "smtp": bool(s.smtp_host and s.smtp_from),
             "media": bool(s.s3_bucket and s.s3_public_url), "redis": bool(s.redis_url)}
@@ -314,7 +315,8 @@ def fulfill(row_id: UUID4, data: Fulfillment, db: DB, admin: Admin):
     if not order:
         raise HTTPException(404, "Order not found.")
     cash_due = order.payment.method == "CASH_ON_DELIVERY" and order.payment.status == "DUE"
-    if not (cash_due or order.payment.status == "CAPTURED") or transitions.get(order.status) != data.status:
+    demo = order.payment.method == "DEMO" and order.payment.status == "NOT_REQUIRED"
+    if not (cash_due or demo or order.payment.status == "CAPTURED") or transitions.get(order.status) != data.status:
         raise HTTPException(409, "That fulfillment transition is unavailable.")
     if cash_due and data.status == "DELIVERED":
         if not data.cash_collected:
@@ -328,9 +330,10 @@ def fulfill(row_id: UUID4, data: Fulfillment, db: DB, admin: Admin):
         order.shipment = Shipment(carrier=data.carrier, tracking=data.tracking)
     order.status = data.status
     audit(db, admin, "fulfillment_updated", order.id, {"status": data.status})
-    enqueue(db, order.address["email"], f"Deskly order {order.number}",
-            f"Order {order.number} is {data.status.lower()}." +
-            (f" Tracking: {order.shipment.carrier} / {order.shipment.tracking}" if order.shipment else ""))
+    if not demo:
+        enqueue(db, order.address["email"], f"Deskly order {order.number}",
+                f"Order {order.number} is {data.status.lower()}." +
+                (f" Tracking: {order.shipment.carrier} / {order.shipment.tracking}" if order.shipment else ""))
     db.commit()
     return order_view(order, full=True)
 

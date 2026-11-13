@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
+  ...(process.env.DESKLY_LOCAL_LAUNCHER === "1" ? { distDir: ".next-local" } : {}),
   output: "standalone",
   poweredByHeader: false,
   devIndicators: false,

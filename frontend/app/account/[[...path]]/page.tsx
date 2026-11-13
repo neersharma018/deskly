@@ -8,7 +8,13 @@ import { server, session } from "@/lib/server";
 import type { Address, Category, Order, Product, SavedSetup } from "@/lib/types";
 
 const routes = [["", "Overview"], ["orders", "Orders"], ["addresses", "Addresses"], ["wishlist", "Wishlist"], ["setups", "Saved setups"], ["settings", "Settings"]];
-export const metadata = { title: "Your account" };
+export async function generateMetadata({ params }: { params: Promise<{ path?: string[] }> }) {
+  const [section] = (await params).path ?? [];
+  const label = routes.find(([key]) => key === section)?.[1];
+  return { title: label ? `${label} · Your account` : "Your account",
+    description: "Manage your orders, shipping addresses and saved workspace setups.",
+    robots: { index: false, follow: false } };
+}
 
 export default async function AccountPage({ params, searchParams }: { params: Promise<{ path?: string[] }>; searchParams: Promise<{ page?: string }> }) {
   const { path = [] } = await params;

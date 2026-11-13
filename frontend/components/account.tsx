@@ -29,7 +29,7 @@ export function AccountProfile({ user }: { user: User }) {
   }
   async function logout() {
     setBusy(true);
-    try { await api("/auth/logout", "POST"); window.dispatchEvent(new Event("deskly:update")); router.push("/"); router.refresh(); }
+    try { await api("/auth/logout", "POST"); window.location.assign("/"); }
     catch (error) { setNote(message(error)); setBusy(false); }
   }
   return <div className="panel form-stack"><h2>Profile</h2><form method="post" onSubmit={save} className="form-stack">
@@ -82,6 +82,7 @@ export function CustomerOrder({ initial }: { initial: Order }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   async function cancel() {
+    setNote("");
     setBusy(true);
     try { setOrder(await api<Order>(`/me/orders/${order.id}/cancel`, "POST")); }
     catch (error) { setNote(message(error)); }
@@ -90,6 +91,6 @@ export function CustomerOrder({ initial }: { initial: Order }) {
   return <div className="stack"><OrderDetails order={order}/>
     {(order.status === "PENDING_PAYMENT" || order.status === "PLACED") && <div className="button-row">
       {order.status === "PENDING_PAYMENT" && <Button asChild><Link href="/checkout">Resume checkout</Link></Button>}
-      {(order.payment === "CREATED" || order.payment === "DUE") && <Button variant="outline" disabled={busy} onClick={cancel}>Cancel unpaid order</Button>}</div>}
+      {["CREATED", "DUE", "NOT_REQUIRED"].includes(order.payment) && <Button variant="outline" disabled={busy} onClick={cancel}>{order.payment_method === "DEMO" ? "Cancel demo order" : "Cancel unpaid order"}</Button>}</div>}
     {note && <p className="alert" role="alert">{note}</p>}</div>;
 }

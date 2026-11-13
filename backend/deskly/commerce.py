@@ -26,7 +26,7 @@ class Quote(Input):
 class Checkout(Quote):
     address: Shipping
     expected_total: int = Field(gt=0)
-    payment_method: Literal["RAZORPAY", "CASH_ON_DELIVERY"] = "RAZORPAY"
+    payment_method: Literal["RAZORPAY", "CASH_ON_DELIVERY", "DEMO"] = "RAZORPAY"
 
 
 class Verify(Input):
@@ -157,7 +157,7 @@ def quote(data: Quote, request: Request, response: Response, db: DB, user: Optio
     s = settings()
     return {**pricing(subtotal, coupon_discount(coupon, subtotal) if coupon else 0, s),
             "payments_available": bool(s.razorpay_key_id and s.razorpay_key_secret),
-            "cash_on_delivery": s.cash_on_delivery}
+            "cash_on_delivery": s.cash_on_delivery, "demo_checkout": s.demo_checkout}
 
 
 @router.post("/checkout/orders", status_code=201)
@@ -165,6 +165,8 @@ def checkout(data: Checkout, request: Request, response: Response, db: DB, user:
              idempotency_key: Annotated[str, Header(min_length=16, max_length=80)]):
     s = settings()
     cash = data.payment_method == "CASH_ON_DELIVERY"
+    demo = data.payment_method == "DEMO"
+    offline = cash or demo
     if user:
         db.scalar(select(User.id).where(User.id == user.id).with_for_update(key_share=True))
     cart = find_cart(db, request, response, user, create=False, lock=True)
@@ -172,17 +174,19 @@ def checkout(data: Checkout, request: Request, response: Response, db: DB, user:
         raise HTTPException(409, "Your bag is empty.")
     scope = digest(user.id) if user else cart.guest_digest
     # Existing Razorpay orders were fingerprinted before the payment method field existed.
-    fingerprint = digest(data.model_dump_json(exclude=None if cash else {"payment_method"}))
+    fingerprint = digest(data.model_dump_json(exclude={"payment_method"} if not offline else None))
     existing = db.scalar(select(Order).where(Order.scope == scope, Order.idempotency_key == idempotency_key))
     if existing:
         if existing.fingerprint != fingerprint:
             raise HTTPException(409, "This checkout key was already used with different details.")
-        if cash:
+        if offline:
             return order_view(existing, full=True)
         return initialize(db, existing.id)
     if cash and not s.cash_on_delivery:
         raise HTTPException(503, "Cash on delivery is unavailable.")
-    if not cash and (not s.razorpay_key_id or not s.razorpay_key_secret):
+    if demo and not s.demo_checkout:
+        raise HTTPException(503, "Demo checkout is unavailable.")
+    if not offline and (not s.razorpay_key_id or not s.razorpay_key_secret):
         raise HTTPException(503, "Razorpay payments are unavailable in this environment.")
     owner = Order.user_id == user.id if user else Order.cart_id == cart.id
     pending = db.scalar(select(Order.id).where(owner, Order.status == "PENDING_PAYMENT").limit(1))
@@ -209,16 +213,18 @@ def checkout(data: Checkout, request: Request, response: Response, db: DB, user:
                                    "sku": v.sku, "category": v.product.category.name}))
     if coupon:
         db.add(Redemption(order_id=order.id, coupon_id=coupon.id, customer_key=scope))
-    db.add(Payment(order_id=order.id, method=data.payment_method, status="DUE" if cash else "CREATED"))
+    payment_status = "NOT_REQUIRED" if demo else "DUE" if cash else "CREATED"
+    db.add(Payment(order_id=order.id, method=data.payment_method, status=payment_status))
     db.add(Event(name="checkout_started", entity_id=order.id))
-    if cash:
+    if offline:
         db.flush()
-        move_reservations(db, order, capture=True, reason="Cash on delivery order")
+        move_reservations(db, order, capture=True, reason="Demo order" if demo else "Cash on delivery order")
         clear_ordered_cart(db, order)
         order.status = "PLACED"
         db.add(Event(name="order_placed", entity_id=order.id))
-        enqueue(db, order.address["email"], f"Deskly order {order.number}",
-                f"Order {order.number} was placed. Payment is due on delivery.")
+        if cash:
+            enqueue(db, order.address["email"], f"Deskly order {order.number}",
+                    f"Order {order.number} was placed. Payment is due on delivery.")
         db.commit()
         return order_view(order, full=True)
     db.commit()
@@ -391,14 +397,15 @@ def cancel_order(order_id: UUID4, db: DB, user: CurrentUser):
     order = lock_order(db, str(order_id))
     if not order or order.user_id != user.id:
         raise HTTPException(404, "Order not found.")
-    if order.status == "PLACED" and order.payment.method == "CASH_ON_DELIVERY":
+    if order.status == "PLACED" and order.payment.method in {"CASH_ON_DELIVERY", "DEMO"}:
         reservations = list(db.scalars(select(Reservation).where(Reservation.order_id == order.id, Reservation.state == "CONSUMED")))
         stock = locked_stock(db, [reservation.variant_id for reservation in reservations])
         for reservation in reservations:
             stock[reservation.variant_id].on_hand += reservation.quantity
             reservation.state = "RELEASED"
             db.add(Movement(variant_id=reservation.variant_id, delta=reservation.quantity,
-                            reason="Cash on delivery cancellation", order_id=order.id))
+                            reason="Demo order cancellation" if order.payment.method == "DEMO" else "Cash on delivery cancellation",
+                            order_id=order.id))
         order.status = "CANCELLED"
         order.payment.status = "VOID"
         release_redemption(db, order)

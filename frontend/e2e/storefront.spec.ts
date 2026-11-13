@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
+test.use({ reducedMotion: "reduce" });
+
 test("shop, filter, select a variant and keep the bag after reload", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Make room for better work." })).toBeVisible();
-  await page.getByRole("link", { name: "Shop essentials" }).click();
+  await page.getByRole("link", { name: "Shop now" }).click();
   await page.getByRole("searchbox", { name: "Search" }).fill("Slate");
   await page.getByRole("button", { name: "Apply filters" }).click();
   await page.getByRole("link", { name: "Slate 75 Mechanical Keyboard", exact: true }).last().click();
@@ -24,10 +26,20 @@ test("shop, filter, select a variant and keep the bag after reload", async ({ pa
 test("register, generate and save a catalogue-matched setup", async ({ page }) => {
   await page.goto("/register");
   await page.getByLabel("Full name").fill("Deskly Test");
-  await page.getByLabel("Email address").fill(`e2e-${randomUUID()}@example.com`);
+  const email = `e2e-${randomUUID()}@example.com`;
+  await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password", { exact: true }).fill("a-test-passphrase");
   await page.getByLabel("Confirm password").fill("a-test-passphrase");
   await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByRole("heading", { name: "Welcome, Deskly Test." })).toBeVisible();
+  await page.goto("/account/settings");
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.waitForURL("/");
+  await page.goto("/account");
+  await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill("a-test-passphrase");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Welcome, Deskly Test." })).toBeVisible();
   await page.goto("/setup-builder");
   await page.getByLabel("Desk Mats", { exact: true }).check();

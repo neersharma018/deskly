@@ -20,6 +20,7 @@ jobs:
       APP_ORIGIN: http://localhost:3000
       SAMPLE_CATALOGUE: "true"
       CASH_ON_DELIVERY: "true"
+      DEMO_CHECKOUT: "true"
       SEED_ADMIN_EMAIL: admin@deskly-ci.example.com
       PLAYWRIGHT_ADMIN_EMAIL: admin@deskly-ci.example.com
     steps:

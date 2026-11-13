@@ -4,7 +4,7 @@ import { Button, PageHeader } from "@/components/ui";
 import { editorial } from "@/lib/editorial-media";
 import { server, storeUnavailable } from "@/lib/server";
 import type { Category } from "@/lib/types";
-export const metadata = { title: "Setup Builder" };
+export const metadata = { title: "Setup Builder", description: "Build a desk setup from available products that match your budget, work and preferred style." };
 export default async function BuilderPage({ searchParams }: { searchParams: Promise<{ purpose?: string; aesthetic?: string }> }) {
   const [categories, params] = await Promise.all([server<Category[]>("/categories").catch(storeUnavailable), searchParams]);
   return <div className="wrap content">

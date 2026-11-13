@@ -131,7 +131,7 @@ export function Builder({ categories, purpose, aesthetic, saved }: { categories:
       {error && <div className="alert" role="alert">{error} {error.startsWith("Sign in") && <a className="inline-link" href="/login" target="_blank" rel="noreferrer">Open sign-in</a>}</div>}
       {notice && <p className="form-note" role="status">{notice} {notice.includes("bag") && <Link href="/cart">View bag</Link>}</p>}
       {setup ? <motion.div className="stack" initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }}>
-        <span className="eyebrow"><i/>{setup.source === "ai" ? "AI-ASSISTED EXPLANATION" : "CATALOGUE-MATCHED SETUP"}</span>
+        <span className="eyebrow"><i/>{setup.source === "ai" ? "AI-ASSISTED EXPLANATION" : "RULE-BASED RECOMMENDATIONS"}</span>
         <div><h2>{setup.title}</h2><p className="fine">{setup.description}</p></div>
         {setup.warnings.map(warning => <p className="form-note" key={warning}>{warning}</p>)}
         {!setup.items.length && <p>No items match your selection. Adjust your preferences and generate again.</p>}

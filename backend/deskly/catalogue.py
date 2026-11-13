@@ -40,7 +40,7 @@ def store_info():
     s = settings()
     return {"sample_catalogue": s.sample_catalogue, "free_shipping": s.free_shipping_paise,
             "sandbox": s.razorpay_key_id.startswith("rzp_test_"),
-            "cash_on_delivery": s.cash_on_delivery,
+            "cash_on_delivery": s.cash_on_delivery, "demo_checkout": s.demo_checkout,
             "payments_available": bool(s.razorpay_key_id and s.razorpay_key_secret)}
 
 

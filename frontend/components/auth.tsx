@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { api, message } from "@/lib/api";
 import type { User } from "@/lib/types";
@@ -12,7 +11,6 @@ export type AuthMode = "login" | "register" | "forgot-password" | "reset-passwor
 
 export function AuthForm({ mode, next, token }: { mode: AuthMode; next?: string; token?: string }) {
   const hydrated = useHydrated();
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -32,10 +30,8 @@ export function AuthForm({ mode, next, token }: { mode: AuthMode; next?: string;
         return;
       }
       if (result.cart_adjusted?.length) sessionStorage.setItem("deskly:cart-adjustment", result.cart_adjusted.join(", "));
-      window.dispatchEvent(new Event("deskly:update"));
       const safe = next?.startsWith("/") && !next.startsWith("//") && !next.includes("\\");
-      router.push(safe && next ? next : result.role === "ADMIN" ? "/admin" : "/account");
-      router.refresh();
+      window.location.assign(safe && next ? next : result.role === "ADMIN" ? "/admin" : "/account");
     } catch (error) { setError(message(error)); }
     finally { setBusy(false); }
   }
@@ -46,6 +42,7 @@ export function AuthForm({ mode, next, token }: { mode: AuthMode; next?: string;
       {!forgot && <label className="field">Password<input type="password" name="password" autoComplete={login ? "current-password" : "new-password"} minLength={login ? 1 : 10} maxLength={128} required/></label>}
       {(register || reset) && <label className="field">Confirm password<input type="password" name="password_confirmation" autoComplete="new-password" minLength={10} maxLength={128} required/></label>}
       {error && <p className="alert" role="alert">{error}</p>}{notice && <p className="form-note" role="status">{notice}</p>}
+      {reset && !token && <p className="alert" role="alert">Open the link from your reset email, or <Link className="inline-link" href="/forgot-password">request a new link</Link>.</p>}
       <Button disabled={!hydrated || busy || (reset && !token)}>{busy ? "Please wait…" : login ? "Sign in" : register ? "Create account" : forgot ? "Send reset link" : "Update password"}</Button>
     </form>
     <div className="button-row mt-4">{login ? <><Link className="inline-link" href="/register">Create an account</Link><Link className="inline-link" href="/forgot-password">Forgot password?</Link></> : <Link className="inline-link" href="/login">Back to sign in</Link>}</div>

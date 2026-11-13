@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
+test.use({ reducedMotion: "reduce" });
+
 test("the shoppable lookbook selects a live product", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Discover DESKLY" }).click();
@@ -15,9 +17,9 @@ test("the shoppable lookbook selects a live product", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Beam Task Lamp", level: 1 })).toBeVisible();
 });
 
-test("a customer places and cancels a cash order through the storefront", async ({ page }) => {
+test("a customer places, reopens and cancels a demo order", async ({ page }) => {
   const store = await (await page.request.get("/api/v1/store")).json();
-  test.skip(!store.cash_on_delivery, "Enable CASH_ON_DELIVERY for this checkout flow.");
+  test.skip(!store.demo_checkout, "Enable DEMO_CHECKOUT for this checkout flow.");
   const email = `e2e-order-${randomUUID()}@example.com`;
   await page.goto("/register");
   await page.getByLabel("Full name").fill("Deskly Checkout Test");
@@ -37,13 +39,15 @@ test("a customer places and cancels a cash order through the storefront", async 
   await page.getByLabel("City").fill("Mumbai");
   await page.getByLabel("State").fill("Maharashtra");
   await page.getByLabel("PIN code").fill("400001");
-  await page.getByRole("radio", { name: /Cash on delivery/ }).check();
-  await page.getByRole("button", { name: "Place order" }).click();
-  await expect(page.getByText("Order placed. Payment is due on delivery.")).toBeVisible();
+  await page.getByRole("radio", { name: /Demo checkout/ }).check();
+  await page.getByRole("button", { name: "Place demo order" }).click();
+  await expect(page.getByText("Demo order placed. No payment was collected.")).toBeVisible();
   const orderId = new URL(page.url()).searchParams.get("order");
   expect(orderId).toBeTruthy();
-  await page.goto("/account/orders/" + orderId);
-  await page.getByRole("button", { name: "Cancel unpaid order" }).click();
+  await page.goto("/account/orders");
+  await page.locator(`a[href="/account/orders/${orderId}"]`).click();
+  await expect(page.getByText("Demo order · No payment or delivery.")).toBeVisible();
+  await page.getByRole("button", { name: "Cancel demo order" }).click();
   await expect(page.getByText("Cancelled", { exact: true })).toBeVisible();
   const cart = await (await page.request.get("/api/v1/cart")).json();
   expect(cart.count).toBe(0);

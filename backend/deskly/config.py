@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     free_shipping_paise: int = 500000
     tax_bps: int = 0
     cash_on_delivery: bool = False
+    demo_checkout: bool = False
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
     razorpay_webhook_secret: str = ""
@@ -46,6 +47,8 @@ class Settings(BaseSettings):
             raise ValueError("Invalid shipping or tax configuration")
         if self.environment == "production" and (not self.app_origin.startswith("https://") or not self.redis_url):
             raise ValueError("Production requires an HTTPS APP_ORIGIN and REDIS_URL")
+        if self.demo_checkout and (self.environment == "production" or not self.sample_catalogue):
+            raise ValueError("Demo checkout requires a development or test sample catalogue")
         if self.environment != "production" and self.razorpay_key_id and not self.razorpay_key_id.startswith("rzp_test_"):
             raise ValueError("Use Razorpay test credentials outside production")
         if bool(self.aws_access_key_id) != bool(self.aws_secret_access_key):

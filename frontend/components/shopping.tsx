@@ -33,17 +33,20 @@ export function ShoppingBag() {
   const [cart, setCart] = useState<Cart>();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [notice, setNotice] = useState("");
   useEffect(() => { api<Cart>("/cart").then(setCart).catch(error => setNote(message(error))); }, []);
   async function change(path: string, method: string, data?: unknown) {
     setBusy(true);
     setNote("");
+    setNotice("");
     try {
       setCart(await api<Cart>(path, method, data));
+      setNotice(method === "DELETE" ? "Item removed." : "Quantity updated.");
       window.dispatchEvent(new Event("deskly:update"));
     } catch (error) { setNote(message(error)); } finally { setBusy(false); }
   }
-  if (!cart) return <p role="status">{note || "Loading your bag…"}</p>;
-  if (!cart.items.length) return <Empty title="Your bag is empty">Find something that makes your desk feel like yours.</Empty>;
+  if (!cart) return note ? <p className="alert" role="alert">{note}</p> : <p role="status">Loading your bag…</p>;
+  if (!cart.items.length) return <div className="stack">{notice && <p className="form-note" role="status">{notice}</p>}<Empty title="Your bag is empty">Find something that makes your desk feel like yours.</Empty></div>;
   const canCheckout = cart.items.every(line => line.valid);
   return <div className="split">
     <section className="panel"><h2>Bag items <small>({cart.count})</small></h2>
@@ -57,9 +60,10 @@ export function ShoppingBag() {
           </select></label><button className="icon-button" disabled={busy} aria-label={`Remove ${item.name}`} onClick={() => change("/cart/items/" + item.id, "DELETE")}><Trash2 size={15}/></button></div>
         </div><strong>{money(item.subtotal)}</strong></article>)}
       {note && <p className="alert" role="alert">{note}</p>}
+      {notice && <p className="form-note" role="status">{notice}</p>}
     </section>
     <aside className="panel"><h2>Bag summary</h2><dl className="totals"><div className="total"><dt>Subtotal</dt><dd>{money(cart.subtotal)}</dd></div></dl><p className="fine mb-4">Shipping, tax and discounts are calculated at checkout.</p>
-      {canCheckout ? <Button asChild><Link href="/checkout">Continue to checkout <ArrowRight size={17}/></Link></Button> : <p className="alert">Update unavailable items to continue.</p>}
+      {canCheckout ? <Button asChild><a href="/checkout">Continue to checkout <ArrowRight size={17}/></a></Button> : <p className="alert">Update unavailable items to continue.</p>}
     </aside>
   </div>;
 }
@@ -108,7 +112,12 @@ export function CheckoutForm({ store }: { store: Store }) {
   const attempt = useRef<{ key: string; payload: string } | null>(null);
   const online = Boolean(quote?.payments_available);
   const cash = Boolean(quote?.cash_on_delivery);
-  const method = online && cash ? preferredMethod : cash ? "CASH_ON_DELIVERY" : "RAZORPAY";
+  const demo = Boolean(quote?.demo_checkout);
+  const methods: PaymentMethod[] = [];
+  if (online) methods.push("RAZORPAY");
+  if (cash) methods.push("CASH_ON_DELIVERY");
+  if (demo) methods.push("DEMO");
+  const method = methods.includes(preferredMethod) ? preferredMethod : methods.at(0);
   useEffect(() => {
     const load = async () => {
       const [bag, order] = await Promise.all([api<Cart>("/cart"), api<Order | null>("/checkout/pending")]);
@@ -116,8 +125,11 @@ export function CheckoutForm({ store }: { store: Store }) {
       setPending(order);
       if (!order && bag.items.length) setQuote(await api<Pricing>("/checkout/quote", "POST", {}));
     };
-    load().catch(error => setNote(message(error))).finally(() => setLoaded(true));
-    api<User>("/me").then(user => { setProfile(user); return api<(Address & { id: string })[]>("/me/addresses"); }).then(setAddresses).catch(() => {});
+    const loadProfile = api<User>("/me").then(user => {
+      setProfile(user);
+      return api<(Address & { id: string })[]>("/me/addresses");
+    }).then(setAddresses).catch(() => {});
+    Promise.all([load().catch(error => setNote(message(error))), loadProfile]).finally(() => setLoaded(true));
   }, []);
   async function apply(code: string) {
     setBusy(true);
@@ -150,7 +162,7 @@ export function CheckoutForm({ store }: { store: Store }) {
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || !quote || !(online || cash)) return;
+    if (busy || !quote || !method) return;
     const address = addressFrom(event.currentTarget);
     setNote("");
     setBusy(true);
@@ -184,7 +196,7 @@ export function CheckoutForm({ store }: { store: Store }) {
     <form method="post" className="panel form-stack" onSubmit={submit}><h2>Shipping details</h2>
       {addresses.length > 0 && <label className="field">Saved address<select value={selected} onChange={e => setSelected(e.target.value)}><option value="">Enter an address</option>{addresses.map(a => <option value={a.id} key={a.id}>{a.line1}, {a.city}</option>)}</select></label>}
       <AddressFields key={selected || profile?.id || "guest"} address={addresses.find(a => a.id === selected) || profile}/>
-      {(online || cash) && <fieldset className="payment-options">
+      {method && <fieldset className="payment-options">
         <legend>Payment method</legend>
         {online && <label className="payment-choice"><input type="radio" name="payment_method" value="RAZORPAY"
           checked={method === "RAZORPAY"} onChange={() => setPreferredMethod("RAZORPAY")}/>
@@ -194,13 +206,17 @@ export function CheckoutForm({ store }: { store: Store }) {
           checked={method === "CASH_ON_DELIVERY"} onChange={() => setPreferredMethod("CASH_ON_DELIVERY")}/>
           <span><strong>Cash on delivery</strong><small>Payment is due when your order is delivered.</small></span>
         </label>}
+        {demo && <label className="payment-choice"><input type="radio" name="payment_method" value="DEMO"
+          checked={method === "DEMO"} onChange={() => setPreferredMethod("DEMO")}/>
+          <span><strong>Demo checkout</strong><small>Use sample details. A test order is saved without a charge or delivery.</small></span>
+        </label>}
       </fieldset>}
-      {store.sample_catalogue && (online || cash) && <p className="fine">Orders from this sample catalogue are for development.</p>}
-      {quote && !(online || cash) && <p className="alert" role="status">Checkout is unavailable until a payment method is enabled.</p>}
+      {store.sample_catalogue && method && <p className="fine">Orders from this sample catalogue are for development.</p>}
+      {quote && !method && <p className="alert" role="status">Checkout is temporarily unavailable.</p>}
       {note && <p className="alert" role="alert">{note}</p>}
-      {(online || cash) && <Button disabled={busy}>
+      {method && <Button disabled={busy}>
         {method === "CASH_ON_DELIVERY" ? <Truck size={16}/> : <LockKeyhole size={16}/>}
-        {busy ? "Preparing checkout…" : method === "CASH_ON_DELIVERY" ? "Place order" : "Pay with Razorpay"}
+        {busy ? "Preparing checkout…" : method === "DEMO" ? "Place demo order" : method === "CASH_ON_DELIVERY" ? "Place order" : "Pay with Razorpay"}
       </Button>}
     </form>
     <aside className="panel"><h2>Order summary</h2>
@@ -215,6 +231,7 @@ export function OrderDetails({ order }: { order: Order }) {
   const address = order.address;
   return <div className="split"><section className="panel stack"><h2>{order.number}</h2><div className="button-row"><Badge status={order.status}/><Badge status={order.payment === "DUE" ? "PAYMENT_DUE" : order.payment}/></div>
     {order.payment_method === "CASH_ON_DELIVERY" && <p className="fine">Cash on delivery{order.payment === "DUE" ? " · Payment is due when the order is delivered." : ""}</p>}
+    {order.payment_method === "DEMO" && <p className="fine">Demo order · No payment or delivery.</p>}
     {order.status === "PAYMENT_FAILED" && order.payment === "CAPTURED" && <p className="alert">Payment was captured after checkout expired. This order requires review.</p>}
     <ul>{order.items?.map((item, i) => <li className="line" key={i}><strong>{item.quantity} ×</strong><span>{item.name}<br/><small>{item.variant}</small></span><span>{money(item.quantity * item.unit_price)}</span></li>)}</ul>
     {order.shipment && <p><strong>Tracking</strong> {order.shipment.carrier} · {order.shipment.tracking}</p>}</section>
@@ -241,9 +258,10 @@ export function CheckoutStatus({ id }: { id: string }) {
     refresh();
     return () => { stopped = true; clearTimeout(timer); };
   }, [id]);
-  if (!order) return <p role="status">{note || "Checking your order…"}</p>;
+  if (!order) return note ? <p className="alert" role="alert">{note}</p> : <p role="status">Checking your order…</p>;
   return <div className="stack">{order.status === "PENDING_PAYMENT" && <p className="form-note">Awaiting verified payment. This page checks for an update.</p>}
-    {order.status === "PLACED" && <p className="form-note" role="status">Order placed. Payment is due on delivery.</p>}
+    {order.status === "PLACED" && <p className="form-note" role="status">{order.payment_method === "DEMO" ? "Demo order placed. No payment was collected." : "Order placed. Payment is due on delivery."}</p>}
+    {order.status === "PAID" && order.payment === "CAPTURED" && <p className="form-note" role="status">Payment verified. Your order is confirmed.</p>}
     <OrderDetails order={order}/>
     <div className="button-row"><Button asChild variant="outline"><Link href="/checkout">Back to checkout</Link></Button><Button asChild><Link href="/shop">Continue shopping</Link></Button></div>
   </div>;

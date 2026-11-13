@@ -194,7 +194,7 @@ export function AdminOrders({ orders }: { orders: Order[] }) {
   }
   return <div className="stack"><Table headings={["Order", "Status", "Payment", "Total"]} rows={orders.map(o => [
     <Link key={o.id} href={`/admin/orders/${o.id}`}>{o.number}</Link>, <Badge key="status" status={o.status}/>,
-    <Badge key="payment" status={o.payment}/>, money(o.pricing.total)
+    <Badge key="payment" status={o.payment_method === "DEMO" ? "DEMO_ORDER" : o.payment}/>, money(o.pricing.total)
   ])}/>{orders.length > 0 && <div><Button variant="outline" onClick={download}>Export this page as CSV</Button></div>}</div>;
 }
 
@@ -202,7 +202,8 @@ export function FulfillmentEditor({ order }: { order: Order }) {
   const router = useRouter();
   const next: Record<string, string> = { PLACED: "PROCESSING", PAID: "PROCESSING", PROCESSING: "SHIPPED", SHIPPED: "DELIVERED" };
   const cashDue = order.payment_method === "CASH_ON_DELIVERY" && order.payment === "DUE";
-  const nextStatus = cashDue || order.payment === "CAPTURED" ? next[order.status] : undefined;
+  const demo = order.payment_method === "DEMO" && order.payment === "NOT_REQUIRED";
+  const nextStatus = cashDue || demo || order.payment === "CAPTURED" ? next[order.status] : undefined;
   return <div className="stack"><OrderDetails order={order}/>{order.address && <div className="panel"><h2>Contact</h2><p>{order.address.email} · {order.address.phone}</p></div>}
     {nextStatus && <AdminForm title="Update fulfillment" action={`Mark ${nextStatus.toLowerCase()}`} submit={async fields => {
       await api(`/admin/orders/${order.id}/fulfillment`, "PATCH", { status: nextStatus, carrier: value(fields, "carrier"), tracking: value(fields, "tracking"), cash_collected: fields.has("cash_collected") });
